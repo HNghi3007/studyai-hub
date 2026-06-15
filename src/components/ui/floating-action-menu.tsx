@@ -23,13 +23,13 @@ const FloatingActionMenu = ({ options, className }: FloatingActionMenuProps) => 
     <div className={cn("fixed bottom-8 right-8 z-40", className)}>
       <Button
         onClick={toggleMenu}
-        className="w-10 h-10 p-0 rounded-full bg-[#11111198] hover:bg-[#111111d1] shadow-[0_0_20px_rgba(0,0,0,0.2)]"
+        className="w-10 h-10 p-0 rounded-full bg-white hover:bg-gray-100 shadow-[0_4px_12px_rgba(0,0,0,0.2)]"
       >
         <motion.div
           animate={{ rotate: isOpen ? 45 : 0 }}
           transition={{ duration: 0.3, ease: "easeInOut", type: "spring", stiffness: 300, damping: 20 }}
         >
-          <Plus className="w-6 h-6 text-white" />
+          <Plus className="w-6 h-6 text-[#1F2023]" />
         </motion.div>
       </Button>
 
