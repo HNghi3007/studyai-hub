@@ -196,11 +196,13 @@ function VoiceModal({ onClose, onSend }: { onClose: () => void; onSend: (msg: st
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[#1F2023] rounded-3xl p-8 border border-[#333] w-96 z-10">
         <h3 className="text-white text-center font-semibold mb-1">Voice Input</h3>
-        <p className="text-gray-500 text-xs text-center mb-4">Nhấn mic để bắt đầu, nhấn lại để dừng & gửi</p>
+        <p className="text-gray-500 text-xs text-center mb-4">Nhấn mic để nói, nhấn lại để gửi</p>
         <AIVoiceInput
           onStart={() => console.log("Recording started")}
-          onStop={(duration) => {
-            if (duration > 0) onSend(`[Voice message - ${duration}s]`);
+          onStop={(duration, transcript) => {
+            if (transcript.trim()) {
+              onSend(transcript.trim());
+            }
             onClose();
           }}
         />

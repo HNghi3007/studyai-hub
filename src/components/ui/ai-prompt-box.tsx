@@ -3,7 +3,7 @@
 import React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode } from "lucide-react";
+import { ArrowUp, Paperclip, Square, X, Mic, Globe, BrainCog, FolderCode } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ");
@@ -40,12 +40,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
 ));
 Textarea.displayName = "Textarea";
 
-// ───────── Tooltip ─────────
+// ─── Tooltip ─────────────────────────────────────────────────────────────────
 
 const TooltipProvider = TooltipPrimitive.Provider;
 const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
-
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
@@ -60,8 +59,8 @@ const TooltipContent = React.forwardRef<
     {...props}
   />
 ));
-
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+
 // ─── Dialog ──────────────────────────────────────────────────────────────────
 
 const Dialog = DialogPrimitive.Root;
@@ -387,13 +386,12 @@ const PromptInputActions: React.FC<PromptInputActionsProps> = ({ children, class
     {children}
   </div>
 );
+
 interface PromptInputActionProps extends React.ComponentProps<typeof Tooltip> {
   tooltip: React.ReactNode;
   children: React.ReactNode;
   side?: "top" | "bottom" | "left" | "right";
-  className?: string;
 }
-
 const PromptInputAction: React.FC<PromptInputActionProps> = ({
   tooltip,
   children,
@@ -531,14 +529,6 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
     }
   };
 
-  const handleStartRecording = () => console.log("Started recording");
-
-  const handleStopRecording = (duration: number) => {
-    console.log(`Stopped recording after ${duration} seconds`);
-    setIsRecording(false);
-    onSend(`[Voice message - ${duration} seconds]`, []);
-  };
-
   const hasContent = input.trim() !== "" || files.length > 0;
 
   return (
@@ -608,14 +598,6 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
             className="text-base"
           />
         </div>
-
-        {isRecording && (
-          <VoiceRecorder
-            isRecording={isRecording}
-            onStartRecording={handleStartRecording}
-            onStopRecording={handleStopRecording}
-          />
-        )}
 
         <PromptInputActions className="flex items-center justify-between gap-2 p-0 pt-2">
           <div
@@ -758,7 +740,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               isLoading
                 ? "Stop generation"
                 : isRecording
-                ? "Stop recording"
+                ? "Cancel recording"
                 : hasContent
                 ? "Send message"
                 : "Voice message"
@@ -770,7 +752,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               className={cn(
                 "h-8 w-8 rounded-full transition-all duration-200",
                 isRecording
-                  ? "bg-transparent hover:bg-gray-200 dark:hover:bg-gray-600/30 text-red-500 hover:text-red-400"
+                  ? "bg-[#1F2023] hover:bg-[#1F2023]/80"
                   : hasContent
                   ? "bg-gray-900 hover:bg-gray-900/80 dark:bg-white dark:hover:bg-white/80"
                   : "bg-transparent hover:bg-gray-200 dark:hover:bg-gray-600/30 text-gray-400 dark:text-[#9CA3AF] hover:text-gray-700 dark:hover:text-[#D1D5DB]"
@@ -785,7 +767,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               {isLoading ? (
                 <Square className="h-4 w-4 fill-current animate-pulse" />
               ) : isRecording ? (
-                <StopCircle className="h-5 w-5 text-red-500" />
+                <X className="h-5 w-5 text-white" />
               ) : hasContent ? (
                 <ArrowUp className="h-4 w-4 text-white dark:text-[#1F2023]" />
               ) : (

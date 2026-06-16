@@ -6,10 +6,8 @@ import { cn } from "@/lib/utils";
 
 interface AIVoiceInputProps {
   onStart?: () => void;
-  onStop?: (duration: number) => void;
+  onStop?: (duration: number, transcript: string) => void;
   visualizerBars?: number;
-  demoMode?: boolean;
-  demoInterval?: number;
   className?: string;
 }
 
@@ -17,52 +15,26 @@ export function AIVoiceInput({
   onStart,
   onStop,
   visualizerBars = 48,
-  demoMode = false,
-  demoInterval = 3000,
   className,
 }: AIVoiceInputProps) {
   const [submitted, setSubmitted] = useState(false);
   const [time, setTime] = useState(0);
-  const [isDemo, setIsDemo] = useState(demoMode);
-  const timeRef = useRef(0);
-  const wasSubmittedRef = useRef(false);
-  const bars = Array.from({ length: visualizerBars }, (_, i) => ({
-    height: `${20 + ((i * 31) % 75)}%`,
-    animationDelay: `${i * 0.05}s`,
-  }));
+  const [isClient, setIsClient] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
     if (submitted) {
       onStart?.();
-      wasSubmittedRef.current = true;
-      intervalId = setInterval(() => {
-        timeRef.current += 1;
-        setTime(timeRef.current);
-      }, 1000);
-    } else if (wasSubmittedRef.current) {
-      wasSubmittedRef.current = false;
-      onStop?.(timeRef.current);
-      timeRef.current = 0;
-      const timeoutId = setTimeout(() => setTime(0), 0);
-      return () => clearTimeout(timeoutId);
+      intervalId = setInterval(() => setTime((t) => t + 1), 1000);
+    } else {
+      setTime(0);
     }
     return () => clearInterval(intervalId);
-  }, [submitted, onStart, onStop]);
-
-  useEffect(() => {
-    if (!isDemo) return;
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const runAnimation = () => {
-      setSubmitted(true);
-      timeoutId = setTimeout(() => {
-        setSubmitted(false);
-        timeoutId = setTimeout(runAnimation, 1000);
-      }, demoInterval);
-    };
-    const initialTimeout = setTimeout(runAnimation, 100);
-    return () => { clearTimeout(timeoutId); clearTimeout(initialTimeout); };
-  }, [isDemo, demoInterval]);
+  }, [submitted]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -70,9 +42,51 @@ export function AIVoiceInput({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const startListening = () => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert("Trinh duyet khong ho tro nhan dien giong noi. Hay dung Chrome hoac Edge.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "vi-VN";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const text = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalTranscript += text + " ";
+        else interim += text;
+      }
+      setTranscript(finalTranscript + interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.log("Speech recognition error:", event.error);
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+    setTranscript("");
+    setSubmitted(true);
+  };
+
+  const stopListening = () => {
+    recognitionRef.current?.stop();
+    setSubmitted(false);
+    onStop?.(time, transcript.trim());
+  };
+
   const handleClick = () => {
-    if (isDemo) { setIsDemo(false); setSubmitted(false); }
-    else setSubmitted((prev) => !prev);
+    if (submitted) stopListening();
+    else startListening();
   };
 
   return (
@@ -96,28 +110,26 @@ export function AIVoiceInput({
           )}
         </button>
 
-        <span className={cn(
-          "font-mono text-sm transition-opacity duration-300",
-          submitted ? "text-white/70" : "text-white/30"
-        )}>
+        <span className={cn("font-mono text-sm transition-opacity duration-300", submitted ? "text-white/70" : "text-white/30")}>
           {formatTime(time)}
         </span>
 
         <div className="h-4 w-64 flex items-center justify-center gap-0.5">
-          {bars.map((bar, i) => (
+          {[...Array(visualizerBars)].map((_, i) => (
             <div
               key={i}
-              className={cn(
-                "w-0.5 rounded-full transition-all duration-300",
-                submitted ? "bg-white/50 animate-pulse" : "bg-white/10 h-1"
-              )}
-              style={submitted ? bar : undefined}
+              className={cn("w-0.5 rounded-full transition-all duration-300", submitted ? "bg-white/50 animate-pulse" : "bg-white/10 h-1")}
+              style={
+                submitted && isClient
+                  ? { height: `${20 + Math.random() * 80}%`, animationDelay: `${i * 0.05}s` }
+                  : undefined
+              }
             />
           ))}
         </div>
 
-        <p className="h-4 text-xs text-white/70">
-          {submitted ? "Đang nghe..." : "Nhấn để nói"}
+        <p className="h-4 text-xs text-white/70 text-center px-4">
+          {submitted ? (transcript || "Dang nghe...") : "Nhan de noi"}
         </p>
       </div>
     </div>
